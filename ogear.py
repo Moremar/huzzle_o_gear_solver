@@ -2,7 +2,7 @@
 
 # This program is a solver for the CAST O'GEAR puzzle from HUZZLE.
 #
-# It takes in input an initial position and a target position of the gear, each defined by :
+# It takes as input an initial position and a target position of the gear, each defined by :
 #   - the side of the gear from 1 to 6 (see side numbering below)
 #   - the tooth of the gear that is inside the cube from 0 to 4 (see teeth numbering below)
 #   - the axis of the gear, either X, Y or Z (see axis direction below)
@@ -11,7 +11,7 @@
 # It generates successive instructions to transition the gear from the initial to the target position.
 #
 # The cube sides are numbered from 1 to 6.
-# We position the origin side at the top and the side with an arrow mark on the right.
+# We position the side with 2 notches at the top (side 1) and the side with an arrow mark on the right (side 5).
 #
 #             ___________       4 (back)
 #            /    1     /|      5 (side with a small arrow mark at the bottom)
@@ -28,11 +28,11 @@
 #          O ------- X
 #
 # The polarity of the gear is an indicator of which side of the gear is facing which direction.
-# It is 1 when the side marked with HANAYAMA is facing the its axis positive area, -1 otherwise.
+# It is 1 when the side marked with HANAYAMA is facing its axis positive area, and -1 otherwise.
 #
-# The teeth of the gear also need to be numbered from 0 to 4.
+# The teeth of the gear need to be numbered from 0 to 4.
 # When facing the side of the gear marked with HANAYAMA, we number as 0 the tooth with a hole, then 1
-# the tooth on its left, then 2 the one on the left of tooth 2, and so on for 3 and 4.
+# the tooth on its left, then 2 the one on the left of tooth 1, and so on for 3 and 4.
 #
 # To solve the puzzle we must bring tooth 4 inside side 6 of the cube along axis X with polarity -1.
 
@@ -43,18 +43,18 @@ import argparse
 X, Y, Z = 'X', 'Y', 'Z'
 
 
-# Dictionary listing all the possible moves from a position on the cube to another.
+# Dictionary listing all the possible moves from a position to another.
 # Each position is represented by the side number (1 to 6) and the axis of the gear (X, Y or Z).
 #
 # (1, X) means that the gear is on side 1 of the cube and follows the X axis.
 # A transition is represented as ((next_side, next_axis), tooth_incr, polarity_mult)
-# A transition is either a rotation on the same cube side, or a move to an adjacent cube side.
+# A transition is either a rotation on the same side of the cube, or a move to an adjacent side of the cube.
 #
 # The tooth increment represents the change of the tooth inside the cube.
 # It is 0 for in-place rotations, and either 1 or -1 when moving the gear from a side to another.
 #
 # The polarity multiplier indicates if the polarity of the gear changes due to a transition.
-# It is -1 if the transition changes the polarity and 1 if it doesn't.
+# It is -1 if the transition changes the polarity, and 1 if it doesn't.
 TRANSITIONS = {
     (1, X) : { ((2, X), -1, 1), ((4, X),  1, 1), ((1, Y), 0, -1) },
     (1, Y) : { ((3, Y),  1, 1), ((1, X), 0, -1) },
@@ -75,14 +75,16 @@ def solve(origin, target):
     """Find the shortest path to the target using a BFS"""
     to_process = deque([(origin, 0, [])])
     seen_states = {origin}
-    while True:
+    while len(to_process) > 0:
         curr_state = to_process.popleft()
-        (face, spike, polarity), steps, path = curr_state
-        for transition in TRANSITIONS[face]:
-            (next_face, spike_incr, polarity_mult) = transition
+        (side_id, tooth, polarity), steps, path = curr_state
+        if side_id not in TRANSITIONS:
+            raise ValueError(f'{side_id} is an invalid initial position')
+        for transition in TRANSITIONS[side_id]:
+            (next_side_id, tooth_incr, polarity_mult) = transition
             next_polarity = polarity * polarity_mult
-            next_spike = (spike + (spike_incr * polarity)) % 5
-            next_state = (next_face, next_spike, next_polarity)
+            next_tooth = (tooth + (tooth_incr * polarity)) % 5
+            next_state = (next_side_id, next_tooth, next_polarity)
             if next_state in seen_states:
                 # this state has already been checked before, skip it
                 continue
@@ -91,6 +93,8 @@ def solve(origin, target):
             if next_state == target:
                 return next_path
             to_process.append((next_state, steps+1, next_path))
+
+    raise ValueError('No solution found, check the provided initial and target positions')
 
 
 def parse_args():
