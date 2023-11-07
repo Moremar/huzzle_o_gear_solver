@@ -102,15 +102,15 @@ def parse_args():
     parser.add_argument('-is', '--initial_side', type=int, default=1, choices=range(1, 7), help='Initial side of the cube')
     parser.add_argument('-ia', '--initial_axis', type=str, default='X', choices=['X', 'Y', 'Z'], help='Initial axis of the gear')
     parser.add_argument('-it', '--initial_tooth', type=int, default=0, choices=range(0, 5), help='Initial tooth inside the cube')
-    parser.add_argument('-ip', '--initial_polarity', type=int, default=1, choices=[-1, 1], help='Initial polarity of the gear')
+    parser.add_argument('-ip', '--initial_polarity', type=str, default='T', choices=['T', 'F'], help='Initial polarity of the gear, T if facing the axis, F otherwise')
     parser.add_argument('-ts', '--target_side', type=int, default=6, choices=range(1, 7), help='Initial side of the cube')
     parser.add_argument('-ta', '--target_axis', type=str, default='X', choices=['X', 'Y', 'Z'], help='Initial axis of the gear')
     parser.add_argument('-tt', '--target_tooth', type=int, default=4, choices=range(0, 5), help='Initial tooth inside the cube')
-    parser.add_argument('-tp', '--target_polarity', type=int, default=-1, choices=[-1, 1], help='Initial polarity of the gear')
+    parser.add_argument('-tp', '--target_polarity', type=str, default='F', choices=['T', 'F'], help='Initial polarity of the gear, T if facing the axis, F otherwise')
 
     args = parser.parse_args()
-    origin = (args.initial_side, args.initial_axis), args.initial_tooth, args.initial_polarity
-    target = (args.target_side, args.target_axis), args.target_tooth, args.target_polarity
+    origin = (args.initial_side, args.initial_axis), args.initial_tooth, 1 if args.initial_polarity == 'T' else -1
+    target = (args.target_side, args.target_axis), args.target_tooth, 1 if args.target_polarity == 'T' else -1
     print(f'Origin : side {args.initial_side} axis {args.initial_axis} tooth {args.initial_tooth} polarity {args.initial_polarity}')
     print(f'Target : side {args.target_side} axis {args.target_axis} tooth {args.target_tooth} polarity {args.target_polarity}')
     return origin, target
